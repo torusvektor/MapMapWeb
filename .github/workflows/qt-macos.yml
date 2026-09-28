@@ -1,0 +1,37 @@
+# Build a Qt project on macOS
+name: Build on macOS
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+    steps:
+    - uses: actions/checkout@v4
+    # Qt 5.15 and GStreamer from Homebrew (native Apple Silicon builds);
+    # src/src.pri finds GStreamer with pkg-config when the framework is not installed.
+    - name: Install Qt and GStreamer
+      run: |
+        brew install qt@5 gstreamer pkgconf
+        echo "$(brew --prefix qt@5)/bin" >> "$GITHUB_PATH"
+    - name: qmake
+      run: |
+        qmake --version
+        qmake .
+    - name: make
+      run: make -j"$(sysctl -n hw.ncpu)"
+    - name: make check
+      run: make check
+
+#    - name: make distcheck
+#      run: make distcheck
